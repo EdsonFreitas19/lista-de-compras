@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<section class="painel">
+  <div class="painel-banca">
+    <span class="rotulo">Minha banca</span>
+    <strong class="valor-banca">{{ banca|brl }}</strong>
+    <form method="post" action="{{ url_for('atualizar_banca') }}" class="form-linha">
+      <input type="text" name="banca" inputmode="decimal" placeholder="Novo valor, ex: 2.500,00" required>
+      <button class="btn" type="submit">Atualizar</button>
+    </form>
+  </div>
+
+  <div class="painel-geral">
+    <div class="painel-geral-topo">
+      <span class="rotulo">Progresso geral da lista</span>
+      <span class="pct">{{ "%.0f"|format(geral.progresso) }}%</span>
+    </div>
+    <div class="barra"><div class="barra-preenchida" style="width: {{ geral.progresso }}%"></div></div>
+    <div class="painel-geral-base">
+      <span>Total desejado: <strong>{{ geral.total|brl }}</strong></span>
+      <span>Falta: <strong>{{ geral.falta|brl }}</strong></span>
+    </div>
+  </div>
+</section>
+
+<div class="barra-ordem">
+  <h2>Quero comprar <small>({{ pendentes|length }})</small></h2>
+  <form method="get">
+    <label>Ordenar por
+      <select name="ordem" onchange="this.form.submit()">
+        <option value="prioridade" {{ 'selected' if ordem == 'prioridade' }}>Prioridade</option>
+        <option value="preco_asc" {{ 'selected' if ordem == 'preco_asc' }}>Menor preço</option>
+        <option value="preco_desc" {{ 'selected' if ordem == 'preco_desc' }}>Maior preço</option>
+        <option value="recentes" {{ 'selected' if ordem == 'recentes' }}>Mais recentes</option>
+      </select>
+    </label>
+  </form>
+</div>
+
+{% if pendentes %}
+<section class="grade">
+  {% for i in pendentes %}
+  <article class="card">
+    <div class="capa">
+      {% if i.foto %}
+        <img src="{{ url_for('static', filename='uploads/' ~ i.foto) }}" alt="{{ i.nome }}">
+      {% else %}
+        <div class="capa-vazia">🎁</div>
+      {% endif %}
+      <span class="selo selo-{{ i.prioridade }}">{{ i.prioridade_nome }}</span>
+      {% if i.pode_comprar %}<span class="selo-ok">✔ Já dá pra comprar</span>{% endif %}
+    </div>
+
+    <div class="card-corpo">
+      <h3>{{ i.nome }}</h3>
+      <div class="preco">{{ i.preco|brl }}</div>
+      {% if i.loja %}<div class="meta">🏬 {{ i.loja }}</div>{% endif %}
+      {% if i.observacoes %}<p class="obs">{{ i.observacoes }}</p>{% endif %}
+
+      <div class="barra barra-pequena">
+        <div class="barra-preenchida {{ 'completa' if i.pode_comprar }}" style="width: {{ i.progresso }}%"></div>
+      </div>
+      <div class="progresso-texto">
+        <span>{{ "%.0f"|format(i.progresso) }}%</span>
+        <span>{% if i.pode_comprar %}Banca cobre o item{% else %}Faltam {{ i.falta|brl }}{% endif %}</span>
+      </div>
+
+      <div class="acoes">
+        {% if i.link %}<a class="btn btn-mini" href="{{ i.link }}" target="_blank" rel="noopener">Ver link</a>{% endif %}
+        <a class="btn btn-mini" href="{{ url_for('editar', item_id=i.id) }}">Editar</a>
+        {% if i.pode_comprar %}
+        <form method="post" action="{{ url_for('comprar', item_id=i.id) }}">
+          <button class="btn btn-mini btn-primario" type="submit">Comprei</button>
+        </form>
+        {% endif %}
+        <form method="post" action="{{ url_for('excluir', item_id=i.id) }}"
+              onsubmit="return confirm('Remover este item?')">
+          <button class="btn btn-mini btn-perigo" type="submit">Excluir</button>
+        </form>
+      </div>
+    </div>
+  </article>
+  {% endfor %}
+</section>
+{% else %}
+<div class="vazio">
+  <p>Sua lista está vazia.</p>
+  <a class="btn btn-primario" href="{{ url_for('novo') }}">Adicionar o primeiro item</a>
+</div>
+{% endif %}
+
+{% if comprados %}
+<div class="barra-ordem"><h2>Já comprei <small>({{ comprados|length }})</small></h2></div>
+<section class="grade grade-comprados">
+  {% for i in comprados %}
+  <article class="card card-comprado">
+    <div class="capa">
+      {% if i.foto %}
+        <img src="{{ url_for('static', filename='uploads/' ~ i.foto) }}" alt="{{ i.nome }}">
+      {% else %}
+        <div class="capa-vazia">🎁</div>
+      {% endif %}
+      <span class="selo-ok">✔ Comprado</span>
+    </div>
+    <div class="card-corpo">
+      <h3>{{ i.nome }}</h3>
+      <div class="preco">{{ i.preco|brl }}</div>
+      <div class="acoes">
+        <form method="post" action="{{ url_for('desfazer', item_id=i.id) }}">
+          <button class="btn btn-mini" type="submit">Desfazer</button>
+        </form>
+        <form method="post" action="{{ url_for('excluir', item_id=i.id) }}"
+              onsubmit="return confirm('Remover este item?')">
+          <button class="btn btn-mini btn-perigo" type="submit">Excluir</button>
+        </form>
+      </div>
+    </div>
+  </article>
+  {% endfor %}
+</section>
+{% endif %}
+
+{% endblock %}

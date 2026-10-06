@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lista de Desejos</title>
+  <script>
+    // aplica o tema salvo antes de renderizar a página (evita "piscar" branco)
+    (function () {
+      var tema = null;
+      try { tema = localStorage.getItem('tema'); } catch (e) {}
+      if (!tema) {
+        tema = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', tema);
+    })();
+  </script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="topo">
+    <a class="logo" href="{{ url_for('index') }}">🛍️ Lista de Desejos</a>
+    <div class="topo-acoes">
+      <button type="button" class="btn btn-tema" id="btn-tema" aria-label="Alternar modo noturno" title="Alternar modo noturno">🌙</button>
+      <a class="btn btn-primario" href="{{ url_for('novo') }}">+ Novo item</a>
+    </div>
+  </header>
+
+  <main class="container">
+    {% with mensagens = get_flashed_messages(with_categories=true) %}
+      {% for categoria, msg in mensagens %}
+        <div class="aviso aviso-{{ categoria }}">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% block conteudo %}{% endblock %}
+  </main>
+
+  <script>
+    (function () {
+      var raiz = document.documentElement;
+      var botao = document.getElementById('btn-tema');
+      function atualizar() {
+        var escuro = raiz.getAttribute('data-theme') === 'dark';
+        botao.textContent = escuro ? '☀️' : '🌙';
+        botao.title = escuro ? 'Ativar modo claro' : 'Ativar modo noturno';
+      }
+      botao.addEventListener('click', function () {
+        var novo = raiz.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        raiz.setAttribute('data-theme', novo);
+        try { localStorage.setItem('tema', novo); } catch (e) {}
+        atualizar();
+      });
+      atualizar();
+    })();
+  </script>
+</body>
+</html>

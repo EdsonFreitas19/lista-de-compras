@@ -1,0 +1,10 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+.env
+.jwt_secret
+instance/
+*.db
+*.sqlite
+*.sqlite3

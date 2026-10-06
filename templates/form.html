@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block conteudo %}
+<section class="form-card">
+  <h2>{{ 'Editar item' if item else 'Novo item' }}</h2>
+
+  <form method="post" enctype="multipart/form-data" class="form-grade">
+    <label class="campo campo-largo">Nome do item *
+      <input type="text" name="nome" required maxlength="120"
+             value="{{ request.form.nome or (item.nome if item else '') }}">
+    </label>
+
+    <label class="campo">Preço (R$) *
+      <input type="text" name="preco" inputmode="decimal" placeholder="ex: 1.299,90" required
+             value="{{ request.form.preco or ('%.2f'|format(item.preco)|replace('.', ',') if item else '') }}">
+    </label>
+
+    <label class="campo">Prioridade
+      <select name="prioridade">
+        {% set atual = (request.form.prioridade|int) if request.form.prioridade else (item.prioridade if item else 2) %}
+        {% for valor, nome in prioridades.items() %}
+          <option value="{{ valor }}" {{ 'selected' if valor == atual }}>{{ nome }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label class="campo">Loja / onde comprar
+      <input type="text" name="loja" maxlength="80"
+             value="{{ request.form.loja or (item.loja if item and item.loja else '') }}">
+    </label>
+
+    <label class="campo">Link do produto
+      <input type="url" name="link" placeholder="https://..."
+             value="{{ request.form.link or (item.link if item and item.link else '') }}">
+    </label>
+
+    <label class="campo campo-largo">Observações
+      <textarea name="observacoes" rows="3" placeholder="Cor, modelo, tamanho, por que você quer...">{{ request.form.observacoes or (item.observacoes if item and item.observacoes else '') }}</textarea>
+    </label>
+
+    <div class="campo campo-largo">
+      <span>Foto (a "capa" do item)</span>
+      {% if item and item.foto %}
+        <div class="foto-atual">
+          <img src="{{ url_for('static', filename='uploads/' ~ item.foto) }}" alt="Foto atual">
+          <label class="check"><input type="checkbox" name="remover_foto" value="1"> Remover foto atual</label>
+        </div>
+      {% endif %}
+      <input type="file" name="foto" accept="image/png,image/jpeg,image/gif,image/webp" id="foto">
+      <img id="previa" class="previa" alt="" hidden>
+    </div>
+
+    <div class="form-botoes campo-largo">
+      <a class="btn" href="{{ url_for('index') }}">Cancelar</a>
+      <button class="btn btn-primario" type="submit">Salvar</button>
+    </div>
+  </form>
+</section>
+
+<script>
+  const input = document.getElementById('foto');
+  const previa = document.getElementById('previa');
+  input.addEventListener('change', () => {
+    const arq = input.files[0];
+    if (!arq) { previa.hidden = true; return; }
+    previa.src = URL.createObjectURL(arq);
+    previa.hidden = false;
+  });
+</script>
+{% endblock %}
